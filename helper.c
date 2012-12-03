@@ -1,25 +1,110 @@
-#include <stdio.h>
-#include <string.h>
 
-void openFiles (FILE * dbFile , FILE * bookOrderFile)
+struct User[] openDatabase (FILE * dbFile)
 {
-	/*opens the two database files. dbFile is the database of users and 
-	 * bookOrderFile is the database of all the books offered and their prices*/
+	size_t length = 0;
+	char * input;
+	char * part;
+	int largest = 0 ;
+	struct User *newUser;
+	struct Node *tail;
+	struct Node *temp;
+	struct Node *it;
+	struct User[] userList;
+	char * username;
+	char * uid;
+	char * credits;
+	
+	if(dbFile == NULL)
+	{
+		return NULL;
+	}
+
+	/*username | userID | credits | address | state | zip*/
+	while(getline(&input,&length,dbFile) != -1)
+	{
+		strcpy(username,strtok(input,"|"));
+		strcpy(uid,strtok(NULL,"|"));
+		strcpy(credits,strtok(NULL,"|"));
+		newUser = createUser(username,uid,atof(credits));
+		if (atoi(newUser->uid) > largest)
+		{
+			largest = newUser->uid;
+		}
+		if (tail != NULL)
+		{
+			temp = calloc(1,sizeof(struct Node));
+			temp->data = newUser;
+			temp->next = tail->next;
+			tail->next = temp;
+			tail = temp;
+		}
+		else
+		{
+			/*Create a new node and add to the head */
+			tail = calloc(1,sizeof(struct Node));
+			tail->data = newUser;
+			tail->next = tail;
+		}
+	}
+	userList = calloc(largest+1,sizeof(struct User));
+	it = tail->next;
+	
+	while(it != tail)
+	{
+		userList[it->data->uid] = it->data;
+		temp = it;
+		it = it->next;
+		free(temp);
+	}
+	userList[it->data->uid] = it->data;
+	free(it);
+	return userList; 
 }
 
-double bookCost(char *bookTitle)
+void openOrders (FILE * bookOrderFile,struct User[] users)
 {
-	/*Searches through the database for the cost of a book*/
-} 
-
-double purchase(char *bookTitle,struct user username)
-{   /* Adds the book order to the database and subtracts the cost of the book
-	 * from the user's account and returns the amount the user has left in his account
-	 * or if the user does not have enough for the book returns -1*/
-}
-
-void printReceipt(char * bookTitle,int bookCredit,int userCredit)
-{
-	/*After purchasing a book the user gets a printed receipt*/
+	size_t length = 0;
+	char * input;
+	if(bookOrderFile == NULL || users == NULL)
+	{
+		return;
+	}
+	while(getline(&input,&length,bookOrderFile) != -1)
+	{
+		
+	}
+	
 	
 }
+
+
+void printToFile (Node[] userArray)
+{
+	int i = 0;
+	if (userArray == NULL)
+	{
+		return;
+	}
+	else
+	{
+		while(userArray[i] != NULL)
+		{
+			printf("%s",(char *)userArray[i]->data->username);
+			while(userArray[i]
+			printf("=== BEGIN CUSTOMER INFO ===\n");
+			
+		}
+		
+	}
+}
+
+
+struct User createUser(char *username,int uid,double initialCredits)
+{
+	struct User newUser = calloc(1,sizeof(struct User));
+	newUser->username = username;
+	newUser->uid = uid;
+	newUser->initialCredits = initialCredits;
+	pthread_mutex_init(newUser->userMutex,NULL);
+}
+
