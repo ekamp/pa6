@@ -1,0 +1,3 @@
+"Erik Kamp" 0 500
+"Eugene Folley" 1 400
+"Shadow" 2 300
