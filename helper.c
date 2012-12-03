@@ -1,5 +1,5 @@
 
-struct User[] openDatabase (FILE * dbFile)
+struct User * openDatabase (FILE * dbFile)
 {
 	size_t length = 0;
 	char * input;
@@ -9,7 +9,7 @@ struct User[] openDatabase (FILE * dbFile)
 	struct Node *tail;
 	struct Node *temp;
 	struct Node *it;
-	struct User[] userList;
+	struct User *userList;
 	char * username;
 	char * uid;
 	char * credits;
@@ -61,17 +61,25 @@ struct User[] openDatabase (FILE * dbFile)
 	return userList; 
 }
 
-void openOrders (FILE * bookOrderFile,struct User[] users)
+void openOrders (FILE * bookOrderFile,struct User *users)
 {
+	/*Book title | cost | userID | category */ 
 	size_t length = 0;
 	char * input;
+	char * bookTitle;
+	char * cost;
+	char * uid;
 	if(bookOrderFile == NULL || users == NULL)
 	{
 		return;
 	}
 	while(getline(&input,&length,bookOrderFile) != -1)
 	{
+		strcpy(booTitle,strtok(input,"|"));
+		strcpy(cost,strtok(NULL,"|"));
+		strcpy(uid,strtok(NULL,"|"));
 		
+		//newUser = createUser(username,uid,atof(credits));
 	}
 	
 	
@@ -108,3 +116,11 @@ struct User createUser(char *username,int uid,double initialCredits)
 	pthread_mutex_init(newUser->userMutex,NULL);
 }
 
+struct Order createOrder(char *bookTitle,double cost, int uid,)
+{
+	struct User newUser = calloc(1,sizeof(struct User));
+	newUser->username = username;
+	newUser->uid = uid;
+	newUser->initialCredits = initialCredits;
+	pthread_mutex_init(newUser->userMutex,NULL);
+}
