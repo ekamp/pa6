@@ -1,6 +1,41 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include "helper.c"
+#include <string.h>
+#include "bookOrders.h"
 
+int main(int argc, char **argv)
+{	
+	struct User[] users;
+	FILE * dbFile;
+	FILE  * orderFile;
+	if (argc > 1)
+	{
+		if (strcmp(argv[1],"h") == 0)
+		{
+			printf("Help message!!\n");
+			return 0;
+		}	
+	}	
+	if (argc != 4)
+	{
+		printf("User entered in incorrect number of arguments\n");
+		return 0;
+	}
+	dbFile = fopen(argv[1],"r");
+	orderFile = fopen(argv[2],"r");
+	
+	users = openFiles (dbFile, orderFile);
+	if (users == NULL)
+	{
+		printf("ERROR: Entered in invalid File name\n");
+		return 0;
+	}
+	printToFile(users);
+	
+	return 0;
+}
+
+/*create the user database*/
 struct User * openDatabase (FILE * dbFile)
 {
 	size_t length = 0;
@@ -63,7 +98,9 @@ struct User * openDatabase (FILE * dbFile)
 	return userList; 
 }
 
-/*producer*/
+
+
+/*producer thread creates the consumer threads here*/
 void openOrders (FILE * bookOrderFile,struct User *users)
 {
 	/*Book title | cost | userID | category */ 
@@ -103,7 +140,7 @@ void openOrders (FILE * bookOrderFile,struct User *users)
 	fclose(bookOrderFile);
 }
 
-
+/*prints the output file*/
 void printToFile (Node* userArray)
 {
 	int i = 0;
@@ -129,7 +166,7 @@ void printToFile (Node* userArray)
 	}
 }
 
-
+/*helper function to open orders*/
 void purchase(struct Node * success, struct Node * fail,struct User * currentUser,double cost,char *bookTitle)
 {
 	struct Node *temp;
@@ -158,11 +195,3 @@ void purchase(struct Node * success, struct Node * fail,struct User * currentUse
 	}
 }
 
-struct User createUser(char *username,int uid,double initialCredits)
-{
-	struct User newUser = calloc(1,sizeof(struct User));
-	newUser->username = username;
-	newUser->uid = uid;
-	newUser->initialCredits = initialCredits;
-	pthread_mutex_init(newUser->userMutex,NULL);
-}
