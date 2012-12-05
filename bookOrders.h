@@ -14,4 +14,7 @@ void printToFile (Node* userArray, int size);
 /*helper function to open orders*/
 void purchase(struct Node * success, struct Node * fail,struct User * currentUser,double cost,char *bookTitle)
 
+/*the function called by the consumer threads*/
+void consumer(struct ConsumerThreadData* data);
+
 #endif
