@@ -156,7 +156,7 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 {
 	int counter;
 	size_t length = 0;
-	char * input;
+	char * input = NULL;
 	struct ConsumerThreadData* data;	
 	pthread_t id;	
 	sem_t * semaphore = (sem_t*)malloc(sizeof(sem_t));
