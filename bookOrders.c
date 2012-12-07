@@ -7,6 +7,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "datstr.h"
+#include <semaphore.h>
+
 
 int main(int argc, char **argv)
 {	
@@ -144,7 +146,10 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 	char * input;
 	struct ConsumerThreadData* data;	
 	pthread_t id;	
+    sem_t * semaphore = NULL;
+    int value;
 
+    sem_init(semaphore,0,10);
 	if(bookOrderFile == NULL || users == NULL)
 	{
 		return;
@@ -157,7 +162,8 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 		data->users = users;
 		data->input = input;
 		data->usersSize = size;
-
+        sem_post(semaphore);
+        data->semaphore = semaphore;
 		pthread_create(&id, NULL, consumer, data);
 
 
@@ -182,11 +188,13 @@ void *consumer(void* dat){
 
 	id = atoi(uid);
 	if(id+1 > data->usersSize){
+        sem_wait(data->semaphore);
 		return NULL;
 	}
 	pthread_mutex_lock(data->users[id]->userMutex);
 	purchase(data->users[id]->success, data->users[id]->fail, data->users[id], atof(cost), bookTitle);
 	pthread_mutex_unlock(data->users[id]->userMutex);
+    sem_wait(data->semaphore);
 	return NULL;
 }
 

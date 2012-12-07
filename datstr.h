@@ -2,6 +2,8 @@
 #define DATSTR_H
 
 #include <pthread.h>
+#include <semaphore.h>
+
 /*stores the orders so we can print them out at the end*/
 struct Order
 {
@@ -32,6 +34,7 @@ struct ConsumerThreadData{
 	struct User **users;
 	char *input;
 	int usersSize;
+    sem_t *semaphore;
 };
 
 
