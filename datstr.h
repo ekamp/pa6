@@ -34,7 +34,9 @@ struct ConsumerThreadData{
 	struct User **users;
 	char *input;
 	int usersSize;
-    sem_t *semaphore;
+	sem_t *semaphore;
+	pthread_mutex_t *condLock;
+	pthread_cond_t *condition;
 };
 
 

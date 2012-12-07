@@ -11,4 +11,4 @@ datstr.o: datstr.h datstr.c
 	$(CC) $(CFLAGS) datstr.c -l pthread -c
 
 clean:
-	rm -f bookOrders *~ a.out *.o libdatstr.a
+	rm -f bookOrders *~ a.out *.o libdatstr.a report.txt

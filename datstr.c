@@ -8,6 +8,7 @@ struct User* createUser(char *username,int uid,double initialCredits)
 	newUser->username = username;
 	newUser->uid = uid;
 	newUser->remainingCredits = initialCredits;
+	newUser->userMutex = (pthread_mutex_t*)calloc(1,sizeof(pthread_mutex_t));
 	pthread_mutex_init(newUser->userMutex,NULL);
 	return newUser;
 }
@@ -21,30 +22,48 @@ void freeUsers(struct User **array, int size){
 				if(array[i]->username!=NULL){
 					free(array[i]->username);
 				}
-				pthread_mutex_destroy(array[i]->userMutex);
-				ptr = array[i]->success;
-				while(ptr!=NULL){
+				free(array[i]->userMutex);
+				if(array[i]->success!=NULL){
+					ptr = array[i]->success->next;
+					while(ptr!=array[i]->success){
+						if (ptr->data!=NULL){
+							if(((struct Order*)(ptr->data))->bookTitle!=NULL){
+								free(((struct Order*)ptr->data)->bookTitle);
+							}
+							free(ptr->data);
+						}
+						temp=ptr;
+						ptr=ptr->next;
+						free(temp);
+					}
 					if (ptr->data!=NULL){
 						if(((struct Order*)(ptr->data))->bookTitle!=NULL){
 							free(((struct Order*)ptr->data)->bookTitle);
 						}
 						free(ptr->data);
 					}
-					temp=ptr;
-					ptr=ptr->next;
-					free(temp);
+					free(ptr);					
 				}
-				ptr = array[i]->fail;
-				while(ptr!=NULL){
+				if(array[i]->fail!=NULL){
+					ptr = array[i]->fail->next;
+					while(ptr!=array[i]->fail){
+						if (ptr->data!=NULL){
+							if(((struct Order*)ptr->data)->bookTitle!=NULL){
+								free(((struct Order*)ptr->data)->bookTitle);
+							}
+							free(ptr->data);
+						}
+						temp=ptr;
+						ptr=ptr->next;
+						free(temp);
+					}
 					if (ptr->data!=NULL){
 						if(((struct Order*)ptr->data)->bookTitle!=NULL){
 							free(((struct Order*)ptr->data)->bookTitle);
 						}
-						free(ptr->data);
-					}
-					temp=ptr;
-					ptr=ptr->next;
-					free(temp);
+						free(ptr->data);			
+					}				
+					free(ptr);
 				}
 				free(array[i]);
 			}

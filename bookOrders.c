@@ -12,14 +12,14 @@
 
 int main(int argc, char **argv)
 {	
-	struct User** users;/*the user database*/
-	int size; /*number of users in database*/
-	FILE * dbFile;
-	FILE  * orderFile;
+	struct User** users=NULL;/*the user database*/
+	int size=0; /*number of users in database*/
+	FILE * dbFile=NULL;
+	FILE  * orderFile=NULL;
 
 	if (argc > 1)
 	{
-		if (strcmp(argv[1],"h") == 0)
+		if (strcmp(argv[1],"-h") == 0)
 		{
 			printf("Help message!!\n");
 			return 0;
@@ -69,8 +69,8 @@ int main(int argc, char **argv)
 struct User ** openDatabase (FILE * dbFile, int* size)
 {
 	size_t length = 0;
-	char * input = NULL;
 	int largest = 0 ;
+	int existUsersFlag=0;
 	struct User *newUser =NULL;
 	struct Node *tail =NULL;
 	struct Node *temp;
@@ -78,8 +78,8 @@ struct User ** openDatabase (FILE * dbFile, int* size)
 	struct User **userList;
 	char * username =NULL;
 	char * uid = NULL;
-	char * credits = NULL;
-	int existUsersFlag=0;
+	char * buffer=NULL;
+	char * input = NULL;
 
 	if (dbFile == NULL)
 	{
@@ -90,11 +90,22 @@ struct User ** openDatabase (FILE * dbFile, int* size)
 	/*username | userID | credits | address | state | zip*/
 	while(getline(&input,&length,dbFile) != -1)
 	{
+
 		existUsersFlag=1;
-		strcpy(username,strtok(input,"|"));
-		strcpy(uid,strtok(NULL,"|"));
-		strcpy(credits,strtok(NULL,"|"));
-		newUser = createUser(username,atoi(uid),atof(credits));
+
+		buffer = strtok(input,"|");
+		username = (char*)calloc(strlen(buffer)+1,sizeof(char));
+		strcpy(username,buffer);
+
+		buffer= strtok(NULL,"|");
+		uid = (char*)calloc(strlen(buffer)+1,sizeof(char));
+		strcpy(uid,buffer);
+
+		buffer= strtok(NULL,"|"); /*buffer == credits*/
+
+		newUser = createUser(username,atoi(uid),atof(buffer));
+		free(uid);
+
 		if (newUser->uid > largest)
 		{
 			largest = newUser->uid;
@@ -134,6 +145,7 @@ struct User ** openDatabase (FILE * dbFile, int* size)
 	}
 	userList[((struct User*)it->data)->uid] = ((struct User*)it->data);
 	free(it);
+free(input);
 	return userList; 
 }
 
@@ -142,28 +154,35 @@ struct User ** openDatabase (FILE * dbFile, int* size)
 /*producer thread creates the consumer threads here*/
 void openOrders (FILE * bookOrderFile,struct User **users, int size)
 {
+	int counter;
 	size_t length = 0;
 	char * input;
 	struct ConsumerThreadData* data;	
 	pthread_t id;	
-    sem_t * semaphore = NULL;
-    int value;
+	sem_t * semaphore = (sem_t*)malloc(sizeof(sem_t));
+	pthread_cond_t *condition = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	pthread_mutex_t *condLock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
 
-    sem_init(semaphore,0,10);
+	sem_init(semaphore,0,0);
+	pthread_cond_init(condition,NULL);
+	pthread_mutex_init(condLock,NULL);
+
+
 	if(bookOrderFile == NULL || users == NULL)
 	{
 		return;
 	}
 	while(getline(&input,&length,bookOrderFile) != -1)
 	{
-
 		/*start consumer thread, feed it a struct containing the input line which contains a single order and the pointer to the user database*/
 		data = (struct ConsumerThreadData*) calloc (1, sizeof(struct ConsumerThreadData));
 		data->users = users;
 		data->input = input;
 		data->usersSize = size;
-        sem_post(semaphore);
-        data->semaphore = semaphore;
+		data->condition = condition;
+		data->condLock = condLock;
+		sem_post(semaphore);
+		data->semaphore = semaphore;
 		pthread_create(&id, NULL, consumer, data);
 
 
@@ -171,6 +190,21 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 		input=NULL;	
 
 	}
+
+	/*wait for all the consumer threads to finish*/
+	sem_getvalue(semaphore,&counter);
+	pthread_mutex_lock(condLock);
+	while(counter!=0){
+		fprintf(stderr,"number of threads left: %d\n",counter);
+		pthread_cond_wait(condition,condLock);
+		sem_getvalue(semaphore,&counter);
+	}
+free(input);/*if we're short one book, remove this line.  May cause leaks though.*/
+free(condition);
+free(condLock);
+free(semaphore);
+
+
 }
 
 
@@ -188,14 +222,18 @@ void *consumer(void* dat){
 
 	id = atoi(uid);
 	if(id+1 > data->usersSize){
-        sem_wait(data->semaphore);
+		sem_wait(data->semaphore);
 		return NULL;
 	}
 	pthread_mutex_lock(data->users[id]->userMutex);
 	purchase(data->users[id]->success, data->users[id]->fail, data->users[id], atof(cost), bookTitle);
 	pthread_mutex_unlock(data->users[id]->userMutex);
-    sem_wait(data->semaphore);
-	return NULL;
+	sem_wait(data->semaphore);
+	pthread_mutex_lock(data->condLock);
+	pthread_cond_signal(data->condition);
+	pthread_mutex_unlock(data->condLock);
+	free(data);
+return NULL;
 }
 
 
@@ -204,7 +242,8 @@ void printToFile (struct User ** userArray,int length)
 {
 	int i = 0;
 	struct Node *ptr;
-	FILE* file = fopen ("w", "report.txt");
+	FILE* file = fopen ("report.txt","w");
+
 	if (userArray == NULL)
 	{
 		return;
@@ -224,7 +263,7 @@ void printToFile (struct User ** userArray,int length)
 
 				if(userArray[i]->success!=NULL){
 					ptr=userArray[i]->success->next;
-					while(ptr!=userArray[i]->fail){
+					while(ptr!=userArray[i]->success){
 						fprintf(file,"%s| %f| %f\n", ((struct Order*)ptr->data)->bookTitle, ((struct Order*)ptr->data)->cost, ((struct Order*)ptr->data)->currentCredits);
 						ptr=ptr->next;
 					}
@@ -242,11 +281,12 @@ void printToFile (struct User ** userArray,int length)
 					}
 					fprintf(file,"%s| %f\n", ((struct Order*)userArray[i]->fail->data)->bookTitle, ((struct Order*)userArray[i]->fail->data)->cost);
 				}
-				fprintf(file,"=== END CUSTOMER INFO ===\n");
+				fprintf(file,"=== END CUSTOMER INFO ===\n\n");
 			}	
 			i++;
 		}
 	}
+fclose(file);
 }
 
 /*helper function to open orders*/
@@ -257,28 +297,39 @@ void purchase(struct Node * success, struct Node * fail,struct User * currentUse
 	if (currentUser->remainingCredits - cost < 0)
 	{
 		/*Add to the fail node list */
-		temp = calloc(1,sizeof(struct Node));
-		order = calloc(1,sizeof(struct Order));
+		temp = (struct Node*)calloc(1,sizeof(struct Node));
+		order = (struct Order*)calloc(1,sizeof(struct Order));
 		order->bookTitle = bookTitle;
 		order->cost = cost;
 		order->currentCredits = currentUser->remainingCredits;
 		temp->data = order;
-		temp->next = fail->next;
-		fail->next = temp;
-		fail = temp;
+
+		if(fail==NULL){
+			currentUser->fail = temp;
+			temp->next=temp;
+		}else{
+			temp->next = fail->next;
+			fail->next = temp;
+			fail = temp;
+		}
 	}
 	else
 	{
 		/* Add to the success node list */
-		temp = calloc(1,sizeof(struct Node));
-		order = calloc(1,sizeof(struct Order));
+		temp = (struct Node *)calloc(1,sizeof(struct Node));
+		order = (struct Order *)calloc(1,sizeof(struct Order));
 		order->bookTitle = bookTitle;
 		order->cost = cost;
 		currentUser->remainingCredits =	order->currentCredits = currentUser->remainingCredits-cost;
 		temp->data = order;
-		temp->next = success->next;
-		success->next = temp;
-		success = temp;
+		if(success==NULL){
+			currentUser->success=temp;
+			temp->next=temp;
+		}else{
+			temp->next = success->next;
+			success->next = temp;
+			success = temp;
+		}
 	}
 }
 
