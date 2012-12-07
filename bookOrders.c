@@ -1,13 +1,16 @@
+#define _GNU_SOURCE
+
+#include <stdlib.h>
 #include <stdio.h>
-#include "helper.c"
 #include <string.h>
 #include "bookOrders.h"
 #include <pthread.h>
-#include <unistd>
+#include <unistd.h>
+#include "datstr.h"
 
 int main(int argc, char **argv)
 {	
-	struct User* users;/*the user database*/
+	struct User** users;/*the user database*/
 	int size; /*number of users in database*/
 	FILE * dbFile;
 	FILE  * orderFile;
@@ -45,7 +48,7 @@ int main(int argc, char **argv)
 	if (users == NULL)
 	{
 		printf("ERROR: database creation failed\n");
-		fclose(dbfile);
+		fclose(dbFile);
 		fclose(orderFile);
 		return 0;
 	}
@@ -53,28 +56,27 @@ int main(int argc, char **argv)
 	/*This should populate the orders within the users*/
 	openOrders(orderFile,users,size);
 
-	fclose(dbfile);
+	fclose(dbFile);
 	fclose(orderFile);
-	printToFile(users);
-	freeUsers(users);
+	printToFile(users,size);
+	freeUsers(users,size);
 	return 0;
 }
 
 /*create the user database*/
-struct User * openDatabase (FILE * dbFile, int* size)
+struct User ** openDatabase (FILE * dbFile, int* size)
 {
 	size_t length = 0;
-	char * input;
-	char * part;
+	char * input = NULL;
 	int largest = 0 ;
-	struct User *newUser;
-	struct Node *tail;
+	struct User *newUser =NULL;
+	struct Node *tail =NULL;
 	struct Node *temp;
 	struct Node *it;
-	struct User *userList;
-	char * username;
-	char * uid;
-	char * credits;
+	struct User **userList;
+	char * username =NULL;
+	char * uid = NULL;
+	char * credits = NULL;
 	int existUsersFlag=0;
 
 	if (dbFile == NULL)
@@ -90,8 +92,8 @@ struct User * openDatabase (FILE * dbFile, int* size)
 		strcpy(username,strtok(input,"|"));
 		strcpy(uid,strtok(NULL,"|"));
 		strcpy(credits,strtok(NULL,"|"));
-		newUser = createUser(username,uid,atof(credits));
-		if (atoi(newUser->uid) > largest)
+		newUser = createUser(username,atoi(uid),atof(credits));
+		if (newUser->uid > largest)
 		{
 			largest = newUser->uid;
 		}
@@ -117,18 +119,18 @@ struct User * openDatabase (FILE * dbFile, int* size)
 		return NULL;
 	}
 
-	userList = calloc(largest+1,sizeof(struct User));
+	userList = calloc(largest+1,sizeof(struct User*));
 	it = tail->next;
 	*size=largest+1;
 
 	while(it != tail)
 	{
-		userList[it->data->uid] = it->data;
+		userList[((struct User*)it->data)->uid] = ((struct User*)it->data);
 		temp = it;
 		it = it->next;
 		free(temp);
 	}
-	userList[it->data->uid] = it->data;
+	userList[((struct User*)it->data)->uid] = ((struct User*)it->data);
 	free(it);
 	return userList; 
 }
@@ -136,7 +138,7 @@ struct User * openDatabase (FILE * dbFile, int* size)
 
 
 /*producer thread creates the consumer threads here*/
-void openOrders (FILE * bookOrderFile,struct User *users, int size)
+void openOrders (FILE * bookOrderFile,struct User **users, int size)
 {
 	size_t length = 0;
 	char * input;
@@ -166,12 +168,13 @@ void openOrders (FILE * bookOrderFile,struct User *users, int size)
 }
 
 
-void consumer (struct ConsumerThreadData* data){
+void *consumer(void* dat){
 
 	char *bookTitle, *cost, *uid;
-	int id
+	int id;
+	struct ConsumerThreadData* data = (struct ConsumerThreadData*)dat;
 
-		pthread_detach(pthread_self());
+	pthread_detach(pthread_self());
 
 	bookTitle=strtok(data->input,"|");
 	cost=strtok(NULL,"|");
@@ -179,20 +182,21 @@ void consumer (struct ConsumerThreadData* data){
 
 	id = atoi(uid);
 	if(id+1 > data->usersSize){
-		return;
+		return NULL;
 	}
-	pthread_mutex_lock(users[id]->userMutex);
-	purchase(users[id]->success, users[id]->fail, users[id], atof(cost), bookTitle);
-	pthread_mutex_unlock(users[id]->userMutex);
+	pthread_mutex_lock(data->users[id]->userMutex);
+	purchase(data->users[id]->success, data->users[id]->fail, data->users[id], atof(cost), bookTitle);
+	pthread_mutex_unlock(data->users[id]->userMutex);
+	return NULL;
 }
 
 
 /*prints the output file*/
-void printToFile (Node* userArray,int length)
+void printToFile (struct User ** userArray,int length)
 {
 	int i = 0;
 	struct Node *ptr;
-	File* file = fopen ("w", report);
+	FILE* file = fopen ("w", "report.txt");
 	if (userArray == NULL)
 	{
 		return;
@@ -204,19 +208,19 @@ void printToFile (Node* userArray,int length)
 			if(userArray[i]!=NULL){
 				fprintf(file,"=== BEGIN CUSTOMER INFO ===\n");
 				fprintf(file,"### BALANCE ###\n");
-				fprintf(file,"Customer name: %s\n",userArray[i]->data->username);
-				fprintf(file,"Customer ID number: %d\n",userArray[i]->data->uid);
-				fprintf(file,"Remaining credit balance after all purchases (a dollar amount): %f\n",userArray[i]->data->remainingCredits);
+				fprintf(file,"Customer name: %s\n",userArray[i]->username);
+				fprintf(file,"Customer ID number: %d\n",userArray[i]->uid);
+				fprintf(file,"Remaining credit balance after all purchases (a dollar amount): %f\n",userArray[i]->remainingCredits);
 				fprintf(file,"### SUCCESSFUL ORDERS ###\n");
 
 
 				if(userArray[i]->success!=NULL){
 					ptr=userArray[i]->success->next;
 					while(ptr!=userArray[i]->fail){
-						fprintf(file,"%s| %f| %f\n", ptr->bookTitle, ptr->cost, ptr->currentCredits);
+						fprintf(file,"%s| %f| %f\n", ((struct Order*)ptr->data)->bookTitle, ((struct Order*)ptr->data)->cost, ((struct Order*)ptr->data)->currentCredits);
 						ptr=ptr->next;
 					}
-					fprintf(file,"%s| %f| %f\n", success->bookTitle, success->cost, success->currentCredits);
+					fprintf(file,"%s| %f| %f\n", ((struct Order*)userArray[i]->success->data)->bookTitle, ((struct Order *)userArray[i]->success->data)->cost, ((struct Order*)userArray[i]->success->data)->currentCredits);
 				}
 
 
@@ -225,10 +229,10 @@ void printToFile (Node* userArray,int length)
 				if(userArray[i]->fail!=NULL){
 					ptr=userArray[i]->fail->next;
 					while(ptr!=userArray[i]->fail){
-						fprintf(file,"%s| %f\n", ptr->bookTitle, ptr->cost);
+						fprintf(file,"%s| %f\n", ((struct Order*)ptr->data)->bookTitle, ((struct Order*)ptr->data)->cost);
 						ptr=ptr->next;
 					}
-					fprintf(file,"%s| %f\n", fail->bookTitle, fail->cost);
+					fprintf(file,"%s| %f\n", ((struct Order*)userArray[i]->fail->data)->bookTitle, ((struct Order*)userArray[i]->fail->data)->cost);
 				}
 				fprintf(file,"=== END CUSTOMER INFO ===\n");
 			}	
@@ -241,12 +245,12 @@ void printToFile (Node* userArray,int length)
 void purchase(struct Node * success, struct Node * fail,struct User * currentUser,double cost,char *bookTitle)
 {
 	struct Node *temp;
-	struct order *orderTemp;
+	struct Order *order;
 	if (currentUser->remainingCredits - cost < 0)
 	{
 		/*Add to the fail node list */
 		temp = calloc(1,sizeof(struct Node));
-		order = calloc(1,sizeof(struct order));
+		order = calloc(1,sizeof(struct Order));
 		order->bookTitle = bookTitle;
 		order->cost = cost;
 		order->currentCredits = currentUser->remainingCredits;
@@ -259,7 +263,7 @@ void purchase(struct Node * success, struct Node * fail,struct User * currentUse
 	{
 		/* Add to the success node list */
 		temp = calloc(1,sizeof(struct Node));
-		order = calloc(1,sizeof(struct order));
+		order = calloc(1,sizeof(struct Order));
 		order->bookTitle = bookTitle;
 		order->cost = cost;
 		currentUser->remainingCredits =	order->currentCredits = currentUser->remainingCredits-cost;

@@ -1,17 +1,18 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include "datstr.h"
 
-
-struct User createUser(char *username,int uid,double initialCredits)
+struct User* createUser(char *username,int uid,double initialCredits)
 {
-	struct User newUser = calloc(1,sizeof(struct User));
+	struct User* newUser =(struct User *) calloc(1,sizeof(struct User));
 	newUser->username = username;
 	newUser->uid = uid;
-	newUser->initialCredits = initialCredits;
+	newUser->remainingCredits = initialCredits;
 	pthread_mutex_init(newUser->userMutex,NULL);
+	return newUser;
 }
 
-void freeUsers(struct User *array, int size){
+void freeUsers(struct User **array, int size){
 	int i = 0;
 	struct Node *ptr, *temp;
 	if(array!=NULL){
@@ -24,8 +25,8 @@ void freeUsers(struct User *array, int size){
 				ptr = array[i]->success;
 				while(ptr!=NULL){
 					if (ptr->data!=NULL){
-						if(ptr->data->bookTitle!=NULL){
-							free(ptr->data->bookTitle);
+						if(((struct Order*)(ptr->data))->bookTitle!=NULL){
+							free(((struct Order*)ptr->data)->bookTitle);
 						}
 						free(ptr->data);
 					}
@@ -36,8 +37,8 @@ void freeUsers(struct User *array, int size){
 				ptr = array[i]->fail;
 				while(ptr!=NULL){
 					if (ptr->data!=NULL){
-						if(ptr->data->bookTitle!=NULL){
-							free(ptr->data->bookTitle);
+						if(((struct Order*)ptr->data)->bookTitle!=NULL){
+							free(((struct Order*)ptr->data)->bookTitle);
 						}
 						free(ptr->data);
 					}
@@ -45,7 +46,9 @@ void freeUsers(struct User *array, int size){
 					ptr=ptr->next;
 					free(temp);
 				}
+				free(array[i]);
 			}
 		}
+		free(array);
 	}
 }
