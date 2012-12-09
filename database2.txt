@@ -1,0 +1,5 @@
+Sarah Feldman | 1| 100000000| "1800 cootiekin road"|"New jersey"| "12345"| 
+Erik Kamp | 2| 9000000000| "1800 cootiekin road"|"New jersey"| "12145"| 
+Puff Feldman | 3| 0| "1800 cootiekin road"|"New jersey"| "12345"| 
+Shadow Kamp | 4| 9| "poop in back yard"|
+Alexio | 5| 200|
