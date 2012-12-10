@@ -1,0 +1,75 @@
+=== BEGIN CUSTOMER INFO ===
+### BALANCE ###
+Customer name: Sarah Feldman 
+Customer ID number: 1
+Remaining credit balance after all purchases (a dollar amount): 99999848.000000
+### SUCCESSFUL ORDERS ###
+"Outliers: The Story of Success"| 9.830000| 99999848.000000
+"Damaged: The Heartbreaking True Story of a Forgotten Child"| 0.990000| 99999856.000000
+"Star Wars: The Ultimate Action Figure Collection"| 21.379999| 99999856.000000
+"My Year in Meals"| 16.910000| 99999880.000000
+"Underwater Dogs"| 11.600000| 99999896.000000
+"How Children Succeed: Grit, Curiosity, and the Hidden Power of Character"| 9.450000| 99999904.000000
+"A Letter to My Dog: Notes to Our Best Friends"| 16.469999| 99999912.000000
+"The California Surf Project"| 22.160000| 99999928.000000
+"SuperFreakonomics"| 3.790000| 99999952.000000
+"The Greatest Hockey Stories Ever Told: The Finest Writers on Ice"| 9.710000| 99999952.000000
+"Across Islands and Oceans"| 1.990000| 99999960.000000
+"The Handbuilt Home: 34 Simple Stylish and Budget-Friendly Woodworking Projects for Every Room"| 15.630000| 99999960.000000
+"Fifty Places to Dive Before You Die: Diving Experts Share the World's Greatest Destinations"| 16.469999| 99999976.000000
+"I Could Pee on This: And Other Poems by Cats"| 7.490000| 99999992.000000
+### REJECTED ORDERS ###
+=== END CUSTOMER INFO ===
+
+=== BEGIN CUSTOMER INFO ===
+### BALANCE ###
+Customer name: Erik Kamp 
+Customer ID number: 2
+Remaining credit balance after all purchases (a dollar amount): 8999999488.000000
+### SUCCESSFUL ORDERS ###
+"Swimming Studies"| 19.799999| 8999999488.000000
+"Soul Surfer: A True Story of Faith, Family, and Fighting to Get Back on the Board"| 7.990000| 8999999488.000000
+"How to Create a Mind: The Secret of Human Thought Revealed"| 16.400000| 8999999488.000000
+"The Joy of Hate: How to Triumph over Whiners in the Age of Phony Outrage"| 15.600000| 8999999488.000000
+"The History of Surfing"| 31.500000| 8999999488.000000
+### REJECTED ORDERS ###
+=== END CUSTOMER INFO ===
+
+=== BEGIN CUSTOMER INFO ===
+### BALANCE ###
+Customer name: Puff Feldman 
+Customer ID number: 3
+Remaining credit balance after all purchases (a dollar amount): 0.000000
+### SUCCESSFUL ORDERS ###
+### REJECTED ORDERS ###
+"Hockey; The Math of the Game (Sports Illustrated Kids: Sports Math)"| 7.950000
+"Soul Surfer"| 7.990000
+=== END CUSTOMER INFO ===
+
+=== BEGIN CUSTOMER INFO ===
+### BALANCE ###
+Customer name: Shadow Kamp 
+Customer ID number: 4
+Remaining credit balance after all purchases (a dollar amount): 0.090000
+### SUCCESSFUL ORDERS ###
+"The Immortal Life of Henrietta Lacks"| 8.910000| 0.090000
+### REJECTED ORDERS ###
+"The Outpost: An Untold Story of American Valor"| 12.990000
+"Thomas Jefferson: The Art of Power"| 18.980000
+"Following Atticus (P.S.)"| 2.990000
+"Stop Living In This Land. Go To The Everlasting World Of Happiness. Live There Forever."| 7.190000
+"Origami Fun Kit for Beginners (Dover Fun Kit)"| 10.170000
+"365 Cats 2013 Page-A-Day Calendar"| 9.660000
+=== END CUSTOMER INFO ===
+
+=== BEGIN CUSTOMER INFO ===
+### BALANCE ###
+Customer name: Alexio 
+Customer ID number: 5
+Remaining credit balance after all purchases (a dollar amount): 167.400009
+### SUCCESSFUL ORDERS ###
+"Tasting Beer: An Insider's Guide to the World's Greatest Drink"| 11.310000| 167.400009
+"The Endurance: Shackleton's Legendary Antarctic Expedition"| 21.290001| 178.710007
+### REJECTED ORDERS ###
+=== END CUSTOMER INFO ===
+

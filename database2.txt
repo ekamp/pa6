@@ -1,5 +1,0 @@
-"Brian Russell"| 1| 50000000.00| "110 Frelinghuysen Rd., Piscataway"| "New Jersey"| "08854"
-"Ying Zhan"| 2| 65000.00| "3100 Hamilton Blvd, South Plainfield"| "New Jersey"| "07080"
-"Sejong Yoon"| 3| 10000.00| "200 Promenade Boulevard, Bridgewater"| "New Jersey"| "08807"
-"Yuanzhen Gu"| 4| 800.00| "45 Kilmer Road, Edison"| "New Jersey"| "08817"
-"Zi Yan"| 5| 100000.00| "100 Middlesex Essex Turnpike, Iselin"| "New Jersey"| "08830"

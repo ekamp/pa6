@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 	{
 		if (strcmp(argv[1],"-h") == 0)
 		{
-			printf("Help message!!\n");
+ 			printf("To use this program please input the following\nArg 1: the name of the database input file\nArg 2: the name of the book order input file\nArg 3: the list of catgory names (alphanumeric strings separated by blanks in\na single- or double-quoted string)\n\n");
 			return 0;
 		}	
 	}	
