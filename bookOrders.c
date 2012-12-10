@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 	{
 		if (strcmp(argv[1],"-h") == 0)
 		{
- 			printf("To use this program please input the following\nArg 1: the name of the database input file\nArg 2: the name of the book order input file\nArg 3: the list of catgory names (alphanumeric strings separated by blanks in\na single- or double-quoted string)\n\n");
+			printf("To use this program please input the following\nArg 1: the name of the database input file\nArg 2: the name of the book order input file\nArg 3: the list of catgory names (alphanumeric strings separated by blanks in\na single- or double-quoted string)\n\n");
 			return 0;
 		}	
 	}	
@@ -145,7 +145,7 @@ struct User ** openDatabase (FILE * dbFile, int* size)
 	}
 	userList[((struct User*)it->data)->uid] = ((struct User*)it->data);
 	free(it);
-free(input);
+	free(input);
 	return userList; 
 }
 
@@ -195,14 +195,13 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 	sem_getvalue(semaphore,&counter);
 	pthread_mutex_lock(condLock);
 	while(counter!=0){
-		fprintf(stderr,"number of threads left: %d\n",counter);
 		pthread_cond_wait(condition,condLock);
 		sem_getvalue(semaphore,&counter);
 	}
-free(input);/*if we're short one book, remove this line.  May cause leaks though.*/
-free(condition);
-free(condLock);
-free(semaphore);
+	free(input);/*if we're short one book, remove this line.  May cause leaks though.*/
+	free(condition);
+	free(condLock);
+	free(semaphore);
 
 
 }
@@ -213,27 +212,52 @@ void *consumer(void* dat){
 	char *bookTitle, *cost, *uid;
 	int id;
 	struct ConsumerThreadData* data = (struct ConsumerThreadData*)dat;
+	sem_t* semaphore = data->semaphore;
+	pthread_mutex_t * condLock = data->condLock;
+	pthread_cond_t * condition = data->condition;
 
 	pthread_detach(pthread_self());
-
+	if(data->input ==NULL){
+		fprintf(stderr, "\n\n\ninput error in consumer\n\n\n\n");
+		free(data);
+		sem_wait(semaphore);
+		return NULL;
+	}
 	bookTitle=strtok(data->input,"|");
 	cost=strtok(NULL,"|");
 	uid=strtok(NULL,"|");
 
 	id = atoi(uid);
 	if(id+1 > data->usersSize){
-		sem_wait(data->semaphore);
+		fprintf(stderr,"\n\n\nuser id error(1) in consumer: id = %d\n\n\n\n",id);
+		free(data->input);
+		free(data);
+		sem_wait(semaphore);
+		return NULL;
+	}
+	if(id<1){
+		fprintf(stderr,"\n\n\nuser id error(2) in consumer: id = %d\n\n\n\n",id);
+		free(data->input);
+		free(data);
+		sem_wait(semaphore);
+		return NULL;
+	}
+	if(data->users[id]==NULL){
+		fprintf(stderr,"\n\n\nuser id error(3) in consumer: id = %d\n\n\n\n",id);
+		free(data->input);
+		free(data);
+		sem_wait(semaphore);
 		return NULL;
 	}
 	pthread_mutex_lock(data->users[id]->userMutex);
 	purchase(data->users[id]->success, data->users[id]->fail, data->users[id], atof(cost), bookTitle);
 	pthread_mutex_unlock(data->users[id]->userMutex);
-	sem_wait(data->semaphore);
-	pthread_mutex_lock(data->condLock);
-	pthread_cond_signal(data->condition);
-	pthread_mutex_unlock(data->condLock);
 	free(data);
-return NULL;
+	pthread_mutex_lock(condLock);
+	sem_wait(semaphore);
+	pthread_cond_signal(condition);
+	pthread_mutex_unlock(condLock);
+	return NULL;
 }
 
 
@@ -286,7 +310,7 @@ void printToFile (struct User ** userArray,int length)
 			i++;
 		}
 	}
-fclose(file);
+	fclose(file);
 }
 
 /*helper function to open orders*/
