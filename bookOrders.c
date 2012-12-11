@@ -261,7 +261,7 @@ char* endptr,*resptr;
 		return NULL;
 	}
 	pthread_mutex_lock(data->users[id]->userMutex);
-	purchase(data->users[id]->success, data->users[id]->fail, data->users[id], atof(cost), bookTitle);
+	purchase(data->users[id]->success, data->users[id]->fail, data->users[id], strtod(cost,&endptr), bookTitle);
 	pthread_mutex_unlock(data->users[id]->userMutex);
 	free(data);
 	pthread_mutex_lock(condLock);
