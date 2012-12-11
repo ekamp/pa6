@@ -22,6 +22,7 @@ void freeUsers(struct User **array, int size){
 				if(array[i]->username!=NULL){
 					free(array[i]->username);
 				}
+				pthread_mutex_destroy(array[i]->userMutex);
 				free(array[i]->userMutex);
 				if(array[i]->success!=NULL){
 					ptr = array[i]->success->next;

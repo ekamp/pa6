@@ -200,6 +200,7 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 	}
 	free(input);/*if we're short one book, remove this line.  May cause leaks though.*/
 	free(condition);
+	pthread_mutex_destroy(condLock);
 	free(condLock);
 	free(semaphore);
 
@@ -208,7 +209,7 @@ void openOrders (FILE * bookOrderFile,struct User **users, int size)
 
 
 void *consumer(void* dat){
-
+char* endptr,*resptr;
 	char *bookTitle, *cost, *uid;
 	int id;
 	struct ConsumerThreadData* data = (struct ConsumerThreadData*)dat;
@@ -223,30 +224,40 @@ void *consumer(void* dat){
 		sem_wait(semaphore);
 		return NULL;
 	}
-	bookTitle=strtok(data->input,"|");
-	cost=strtok(NULL,"|");
-	uid=strtok(NULL,"|");
+	bookTitle=strtok_r(data->input,"|",&resptr);
+	cost=strtok_r(NULL,"|",&resptr);
+	uid=strtok_r(NULL,"|",&resptr);
 
-	id = atoi(uid);
+	id = (int)strtol(uid,&endptr,10);
 	if(id+1 > data->usersSize){
-		fprintf(stderr,"\n\n\nuser id error(1) in consumer: id = %d\n\n\n\n",id);
+		fprintf(stderr,"\n\n\nuser id error(1) in consumer: id = %d\n%s\n\n\n\n",id,data->input);
+		
 		free(data->input);
 		free(data);
+	pthread_mutex_lock(condLock);
 		sem_wait(semaphore);
+	pthread_cond_signal(condition);
+	pthread_mutex_unlock(condLock);
 		return NULL;
 	}
 	if(id<1){
-		fprintf(stderr,"\n\n\nuser id error(2) in consumer: id = %d\n\n\n\n",id);
+		fprintf(stderr,"\n\n\nuser id error(2) in consumer: id = %d\n%s\n\n\n\n",id,data->input);
 		free(data->input);
 		free(data);
+	pthread_mutex_lock(condLock);
 		sem_wait(semaphore);
+	pthread_cond_signal(condition);
+	pthread_mutex_unlock(condLock);
 		return NULL;
 	}
 	if(data->users[id]==NULL){
-		fprintf(stderr,"\n\n\nuser id error(3) in consumer: id = %d\n\n\n\n",id);
+		fprintf(stderr,"\n\n\nuser id error(3) in consumer: id = %d\n%s\n\n\n\n",id,data->input);
 		free(data->input);
 		free(data);
+	pthread_mutex_lock(condLock);
 		sem_wait(semaphore);
+	pthread_cond_signal(condition);
+	pthread_mutex_unlock(condLock);
 		return NULL;
 	}
 	pthread_mutex_lock(data->users[id]->userMutex);
